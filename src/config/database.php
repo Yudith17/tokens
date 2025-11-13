@@ -1,22 +1,27 @@
 <?php
 class Database {
-    private $host = "localhost";
-    private $db_name = "tokens";
-    private $username = "root";
-    private $password = "root"; // MAMP usa 'root' por defecto
-    public $conn;
-
-    public function getConnection() {
-        $this->conn = null;
+    private static $instance = null;
+    private $pdo;
+    
+    private function __construct() {
+        $host = 'localhost';
+        $dbname = 'tokens'; // Tu base de datos
+        $username = 'root';
+        $password = 'root';
+        
         try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
-            $this->conn->exec("set names utf8");
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch(PDOException $exception) {
-            echo "Error de conexión: " . $exception->getMessage();
-            echo "<br>Verifica que la base de datos 'tokens' exista y las credenciales sean correctas.";
+            $this->pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOException $e) {
+            die("Error de conexión: " . $e->getMessage());
         }
-        return $this->conn;
+    }
+    
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new Database();
+        }
+        return self::$instance->pdo;
     }
 }
 ?>

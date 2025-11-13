@@ -1,107 +1,68 @@
 <?php
 class TokenApi {
-    protected $conn;  // Cambiado de private a protected
-    private $table_name = "tokens_api";
-
-    public $id;
-    public $user_id;
-    public $token;
-    public $name;
-    public $created_at;
-    public $expires_at;
-    public $is_active;
-
-    public function __construct($db) {
-        $this->conn = $db;
+    private $pdo;
+    
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
     }
-   
-
-    // Crear un nuevo token
-    public function create() {
-        $query = "INSERT INTO " . $this->table_name . " 
-                  SET user_id=:user_id, token=:token, name=:name, 
-                      created_at=:created_at, expires_at=:expires_at, is_active=:is_active";
+    
+    public function generarToken($userId, $name = '') {
+        $token = bin2hex(random_bytes(32));
+        $createdAt = date('Y-m-d H:i:s');
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+1 year'));
         
-        $stmt = $this->conn->prepare($query);
+        $sql = "INSERT INTO tokens_api (user_id, token, name, created_at, expires_at, is_active) 
+                VALUES (?, ?, ?, ?, ?, 1)";
         
-        // Sanitizar datos
-        $this->user_id = htmlspecialchars(strip_tags($this->user_id));
-        $this->token = htmlspecialchars(strip_tags($this->token));
-        $this->name = htmlspecialchars(strip_tags($this->name));
-        $this->created_at = htmlspecialchars(strip_tags($this->created_at));
-        $this->expires_at = htmlspecialchars(strip_tags($this->expires_at));
-        $this->is_active = htmlspecialchars(strip_tags($this->is_active));
+        $stmt = $this->pdo->prepare($sql);
+        $result = $stmt->execute([$userId, $token, $name, $createdAt, $expiresAt]);
         
-        // Vincular valores
-        $stmt->bindParam(":user_id", $this->user_id);
-        $stmt->bindParam(":token", $this->token);
-        $stmt->bindParam(":name", $this->name);
-        $stmt->bindParam(":created_at", $this->created_at);
-        $stmt->bindParam(":expires_at", $this->expires_at);
-        $stmt->bindParam(":is_active", $this->is_active);
-        
-        if($stmt->execute()) {
-            return true;
+        if ($result) {
+            return [
+                'success' => true,
+                'token' => $token,
+                'id' => $this->pdo->lastInsertId()
+            ];
         }
-        return false;
-    }
-
-    // Leer todos los tokens
-    public function readAll() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt;
-    }
-
-    // Leer tokens por estado activo/inactivo
-    public function readByStatus($is_active) {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE is_active = :is_active ORDER BY created_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":is_active", $is_active);
-        $stmt->execute();
-        return $stmt;
-    }
-
-    // Leer tokens activos
-    public function readActive() {
-        return $this->readByStatus(1);
-    }
-
-    // Leer tokens inactivos
-    public function readInactive() {
-        return $this->readByStatus(0);
-    }
-
-    // Generar un token único
-    public function generateToken() {
-        return bin2hex(random_bytes(32));
-    }
-
-    // Actualizar estado del token
-    public function updateStatus($id, $is_active) {
-        $query = "UPDATE " . $this->table_name . " SET is_active = :is_active WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":is_active", $is_active);
-        $stmt->bindParam(":id", $id);
         
-        if($stmt->execute()) {
-            return true;
+        return ['success' => false, 'error' => 'Error al generar token'];
+    }
+    
+    public function validarToken($token) {
+        $sql = "SELECT ta.*, u.username 
+                FROM tokens_api ta 
+                INNER JOIN users u ON ta.user_id = u.id 
+                WHERE ta.token = ? AND ta.is_active = 1 AND ta.expires_at > NOW()";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$token]);
+        $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($tokenData) {
+            return [
+                'success' => true,
+                'message' => 'Token válido',
+                'token_data' => $tokenData
+            ];
         }
-        return false;
+        
+        return [
+            'success' => false,
+            'message' => 'Token inválido, expirado o desactivado'
+        ];
     }
-
-    // Agregar este método a la clase TokenApi
-public function validateToken($token) {
-    $query = "SELECT * FROM " . $this->table_name . " WHERE token = :token LIMIT 1";
-    $stmt = $this->conn->prepare($query);
-    $stmt->bindParam(":token", $token);
-    $stmt->execute();
-
-    if ($stmt->rowCount() > 0) {
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    public function getTokenByUserId($userId) {
+        $sql = "SELECT * FROM tokens_api WHERE user_id = ? AND is_active = 1 ORDER BY created_at DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    return false;
-}
+    
+    public function desactivarToken($tokenId) {
+        $sql = "UPDATE tokens_api SET is_active = 0 WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([$tokenId]);
+    }
 }
 ?>

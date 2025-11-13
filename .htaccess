@@ -1,6 +1,8 @@
+# .htaccess - Redirección automática
 RewriteEngine On
 
-# Redirigir todas las solicitudes al index.php
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
+# Redireccionar la raíz a cliente_api.php
+RewriteRule ^$ /tokens/cliente_api.php [L]
+
+# Opcional: Redireccionar index.php también
+RewriteRule ^index\.php$ /tokens/cliente_api.php [L,R=301]

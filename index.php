@@ -2,6 +2,12 @@
 session_start();
 define('BASE_PATH', dirname(__FILE__));
 
+// Redirección automática a cliente_api.php
+if (!isset($_GET['action']) || $_GET['action'] === 'index') {
+    header('Location: cliente_api.php');
+    exit();
+}
+
 require_once 'src/config/database.php';
 require_once 'src/controller/TokenApiController.php';
 
@@ -9,9 +15,6 @@ $controller = new TokenApiController();
 $action = $_GET['action'] ?? 'index';
 
 switch($action) {
-    case 'index':
-        $controller->index();
-        break;
     case 'create':
         $controller->create();
         break;
@@ -43,7 +46,9 @@ switch($action) {
         $controller->buscarHoteles();
         break;
     default:
-        $controller->index();
+        // Para cualquier otra acción no especificada, redirigir a cliente_api.php
+        header('Location: cliente_api.php');
+        exit();
         break;
 }
 ?>

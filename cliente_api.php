@@ -280,6 +280,46 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
+        /* Estilos para el mensaje de éxito en centro de pantalla */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .success-message {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            border: 3px solid #27ae60;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         
         .hotel-grid {
             display: grid;
@@ -498,7 +538,6 @@
         });
         
         document.getElementById('btn_buscar').addEventListener('click', buscarHoteles);
-        document.getElementById('btn_token').addEventListener('click', generarToken);
         document.getElementById('search').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') buscarHoteles();
         });
@@ -541,11 +580,9 @@
                 const data = await respuesta.json();
                 
                 if (data.success) {
-                    showValidationMessage('Token válido - Acceso concedido', 'success');
-                    // Ocultar sección de validación y mostrar búsqueda
-                    tokenValidationSection.style.display = 'none';
-                    searchSection.style.display = 'block';
-                    resultsSection.style.display = 'block';
+                    // Mostrar mensaje de éxito en el centro de la pantalla
+                    mostrarMensajeExito(token, data.cliente);
+                    
                 } else {
                     showValidationMessage(' Token inválido o expirado', 'error');
                 }
@@ -558,8 +595,38 @@
                 btnValidar.textContent = 'Validar Token';
             }
         }
+
+        // Función para mostrar mensaje de éxito en el centro de la pantalla
+        function mostrarMensajeExito(token, cliente) {
+            // Crear overlay para el mensaje
+            const overlay = document.createElement('div');
+            overlay.className = 'overlay';
+            
+            // Crear mensaje
+            const mensajeDiv = document.createElement('div');
+            mensajeDiv.className = 'success-message';
+            
+            mensajeDiv.innerHTML = `
+                <div style="font-size: 4em; margin-bottom: 20px;">✅</div>
+                <h2 style="color: #27ae60; margin-bottom: 15px;">Token Validado Exitosamente</h2>
+                <p style="margin-bottom: 10px; color: #2c3e50;"><strong>Cliente:</strong> ${cliente || 'Sistema SISHO'}</p>
+                <p style="margin-bottom: 20px; color: #7f8c8d; font-size: 0.9em;">Redirigiendo al buscador de hoteles...</p>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <small style="color: #666;">Token: ${token.substring(0, 20)}...</small>
+                </div>
+                <div class="spinner"></div>
+            `;
+            
+            overlay.appendChild(mensajeDiv);
+            document.body.appendChild(overlay);
+            
+            // Redirigir después de 3 segundos
+            setTimeout(() => {
+                window.location.href = 'buscar_hoteles.php?token=' + encodeURIComponent(token);
+            }, 3000);
+        }
         
-        // Función para mostrar mensajes de validación
+        // Función para mostrar mensajes de validación (para errores)
         function showValidationMessage(message, type) {
             validationMessage.textContent = message;
             validationMessage.className = `validation-message validation-${type}`;
@@ -641,54 +708,6 @@
                 loading.style.display = 'none';
                 btnBuscar.disabled = false;
                 btnBuscar.textContent = 'Buscar Hoteles';
-            }
-        }
-
-        async function generarToken() {
-            const btnToken = document.getElementById('btn_token');
-            const loading = document.getElementById('loading');
-            const errorDiv = document.getElementById('error');
-            const tokenSection = document.getElementById('tokenSection');
-            const tokenValue = document.getElementById('tokenValue');
-            const redirectLink = document.getElementById('redirectLink');
-            
-            // Reset estados
-            errorDiv.style.display = 'none';
-            loading.style.display = 'block';
-            tokenSection.style.display = 'none';
-            btnToken.disabled = true;
-            btnToken.textContent = 'Generando...';
-            
-            try {
-                // Generar token sin parámetros de búsqueda
-                const respuesta = await fetch('buscar_hoteles.php?action=generarToken');
-                
-                if (!respuesta.ok) {
-                    throw new Error(`Error HTTP: ${respuesta.status}`);
-                }
-                
-                const data = await respuesta.json();
-                
-                if (data.success && data.token) {
-                    // Mostrar token
-                    tokenValue.textContent = data.token;
-                    tokenSection.style.display = 'block';
-                    
-                    // Configurar enlace de redirección
-                    redirectLink.href = `cliente_api.php?action=resultados&token=${data.token}`;
-                    
-                } else {
-                    throw new Error(data.error || 'Error al generar token');
-                }
-                
-            } catch (error) {
-                console.error('Error:', error);
-                errorDiv.textContent = 'Error al generar token: ' + error.message;
-                errorDiv.style.display = 'block';
-            } finally {
-                loading.style.display = 'none';
-                btnToken.disabled = false;
-                btnToken.textContent = 'Generar Token';
             }
         }
 

@@ -1,85 +1,136 @@
 <?php
+require_once __DIR__ . '/../../config/database.php';
 
 class ClientApi {
-    private $conn;
-    private $table_name = "client_api";
+    private $pdo; // Cambia $db por $pdo para consistencia
 
-    public $id;
-    public $ruc;
-    public $razon_social;
-    public $correo;
-    public $telefono;
-    public $estado;
-    public $fecha_registro;
-
-    public function __construct($db) {
-        $this->conn = $db;
+    public function __construct() {
+        $this->pdo = Database::getConnection(); // Usa getConnection como en tu código original
     }
 
-    // Método para obtener todos los clientes API
+    /**
+     * Obtener todos los clientes API (para VER)
+     */
     public function getAll() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY fecha_registro DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt;
+        try {
+            $stmt = $this->pdo->query("SELECT * FROM Cliente_Api ORDER BY fecha_registro DESC");
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al obtener clientes API: " . $e->getMessage());
+            return [];
+        }
     }
 
-    // Método para buscar cliente por ID
+    /**
+     * Buscar cliente por ID (para VER detalles)
+     */
     public function find($id) {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE id = ? LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $id);
-        $stmt->execute();
-        
-        if ($stmt->rowCount() > 0) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->id = $row['id'];
-            $this->ruc = $row['ruc'];
-            $this->razon_social = $row['razon_social'];
-            $this->correo = $row['correo'];
-            $this->telefono = $row['telefono'];
-            $this->estado = $row['estado'];
-            $this->fecha_registro = $row['fecha_registro'];
-            return $row;
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM Cliente_Api WHERE id = ?");
+            $stmt->execute([$id]);
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al buscar cliente: " . $e->getMessage());
+            return null;
         }
-        return false;
     }
 
-    // Método para crear nuevo cliente API
-    public function create($data) {
-        $query = "INSERT INTO " . $this->table_name . " 
-                 (ruc, razon_social, correo, telefono, estado, fecha_registro) 
-                 VALUES (:ruc, :razon_social, :correo, :telefono, :estado, NOW())";
-        
-        $stmt = $this->conn->prepare($query);
-        
-        // Limpiar datos
-        $ruc = htmlspecialchars(strip_tags($data['ruc']));
-        $razon_social = htmlspecialchars(strip_tags($data['razon_social']));
-        $correo = htmlspecialchars(strip_tags($data['correo']));
-        $telefono = htmlspecialchars(strip_tags($data['telefono'] ?? ''));
-        $estado = htmlspecialchars(strip_tags($data['estado']));
-        
-        // Bind parameters
-        $stmt->bindParam(':ruc', $ruc);
-        $stmt->bindParam(':razon_social', $razon_social);
-        $stmt->bindParam(':correo', $correo);
-        $stmt->bindParam(':telefono', $telefono);
-        $stmt->bindParam(':estado', $estado);
-        
-        if ($stmt->execute()) {
-            return true;
+    /**
+     * BUSCAR clientes por diferentes criterios
+     */
+    public function search($searchTerm) {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM Cliente_Api 
+                WHERE 
+                    ruc LIKE :search OR
+                    razon_social LIKE :search OR
+                    correo LIKE :search OR
+                    telefono LIKE :search
+                ORDER BY razon_social
+            ");
+            $stmt->execute([':search' => "%$searchTerm%"]);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error en búsqueda: " . $e->getMessage());
+            return [];
         }
-        return false;
     }
 
-    // Método para obtener búsquedas del cliente
-    public function getSearches($client_id) {
-        $query = "SELECT * FROM count_requests WHERE client_api_id = ? ORDER BY fecha_consulta DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $client_id);
+    /**
+     * Buscar cliente por token (para autenticación API)
+     */
+    public function findByToken($token) {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT c.*, t.id as token_id 
+                FROM Cliente_Api c 
+                INNER JOIN Token t ON c.id = t.Id_cliente_Api 
+                WHERE t.Token = ? AND c.estado = 'activo' AND t.Estado = 1
+            ");
+            $stmt->execute([$token]);
+            return $stmt->fetch();
+        } catch (PDOException $e) {
+            error_log("Error al buscar por token: " . $e->getMessage());
+            return null;
+        }
+    }
+     /**
+     * CREAR nuevo cliente API
+     */
+    public function create($ruc, $razon_social, $correo, $telefono, $estado) {
+        try {
+            $sql = "INSERT INTO Cliente_Api (ruc, razon_social, correo, telefono, estado) 
+                    VALUES (?, ?, ?, ?, ?)";
+            
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([$ruc, $razon_social, $correo, $telefono, $estado]);
+            
+        } catch (PDOException $e) {
+            error_log("Error en ClientApi::create: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Registrar solicitud API
+     */
+    public function registerRequest($tokenId, $tipo) {
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO Count_Request (Id_Token, Tipo, fecha) 
+                VALUES (?, ?, NOW())
+            ");
+            return $stmt->execute([$tokenId, $tipo]);
+        } catch (PDOException $e) {
+            error_log("Error al registrar request: " . $e->getMessage());
+            return false;
+        }
+    }
+    // En SISHO - models/TokenApi.php
+public function validateTokenByOriginal($tokenOriginal) {
+    try {
+        // Buscar todos los tokens activos
+        $stmt = $this->db->prepare("
+            SELECT t.*, c.razon_social, c.estado as cliente_estado 
+            FROM Token t 
+            LEFT JOIN Cliente_Api c ON t.Id_cliente_Api = c.id 
+            WHERE t.Estado = 1
+        ");
         $stmt->execute();
-        return $stmt;
+        $tokens = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Verificar cada token con password_verify
+        foreach ($tokens as $tokenData) {
+            if (password_verify($tokenOriginal, $tokenData['Token'])) {
+                return $tokenData;
+            }
+        }
+        
+        return false;
+        
+    } catch (PDOException $e) {
+        error_log("Error en validateTokenByOriginal: " . $e->getMessage());
+        return false;
     }
 }
-?>
+}
