@@ -1,4 +1,9 @@
 <?php
+// Incluir los modelos necesarios
+require_once BASE_PATH . '/src/Model/TokenApi.php';
+require_once BASE_PATH . '/src/Model/User.php';
+// require_once BASE_PATH . '/src/Model/Hotel.php'; // Descomenta si tienes este modelo
+
 class TokenApiController {
     private $tokenModel;
     private $userModel;
@@ -9,7 +14,7 @@ class TokenApiController {
         $db = $database->getConnection();
         $this->tokenModel = new TokenApi($db);
         $this->userModel = new User($db);
-        $this->hotelModel = new Hotel($db); // Nuevo modelo de hoteles
+        //$this->hotelModel = new Hotel($db); // Nuevo modelo de hoteles
     }
 
     // Página principal - Lista de tokens
@@ -94,7 +99,22 @@ class TokenApiController {
             header("Location: index.php?action=login");
             exit();
         }
-        include BASE_PATH . '/views/token_api/view.php';
+
+        if (isset($_GET['id'])) {
+            $id = $_GET['id'];
+            $token = $this->tokenModel->readOne($id);
+            
+            if ($token) {
+                include BASE_PATH . '/views/token_api/view.php';
+            } else {
+                $_SESSION['error'] = "Token no encontrado";
+                header("Location: index.php");
+                exit();
+            }
+        } else {
+            header("Location: index.php");
+            exit();
+        }
     }
 
     // Crear token (formulario)
@@ -106,7 +126,7 @@ class TokenApiController {
         }
         include BASE_PATH . '/views/token_api/create.php';
     }
-    // Mostrar formulario de validación
+
     public function validate() {
         // Verificar si el usuario está logueado
         if (!isset($_SESSION['user_id'])) {
@@ -114,9 +134,9 @@ class TokenApiController {
             exit();
         }
         
-        include BASE_PATH . '/views/token_api/validate.php';
+        include BASE_PATH . '/views/token_api/validar_token.php';
     }
-
+    // Procesar validación de token
     public function processValidate() {
         // Verificar si el usuario está logueado
         if (!isset($_SESSION['user_id'])) {
@@ -133,32 +153,17 @@ class TokenApiController {
                 exit();
             }
     
-            // Usar el nuevo método del modelo (SOLUCIÓN 3)
+            // Usar el método del modelo para validar token
             $tokenData = $this->tokenModel->validateToken($token);
     
             if ($tokenData) {
-                // Buscar información del hotel en la base de datos
-                $hotelInfo = $this->hotelModel->getByName($tokenData['name']);
-                
                 // Verificar si el token está activo
                 if (!$tokenData['is_active']) {
                     $_SESSION['validation_result'] = [
                         'valid' => false,
                         'message' => 'Token inactivo',
                         'token_data' => $tokenData,
-                        'hotel_info' => $hotelInfo ? [
-                            'id' => $this->hotelModel->id,
-                            'name' => $this->hotelModel->name,
-                            'category' => $this->hotelModel->category,
-                            'description' => $this->hotelModel->description,
-                            'address' => $this->hotelModel->address,
-                            'district' => $this->hotelModel->district,
-                            'province' => $this->hotelModel->province,
-                            'department' => $this->hotelModel->department,
-                            'phone' => $this->hotelModel->phone,
-                            'email' => $this->hotelModel->email,
-                            'website' => $this->hotelModel->website
-                        ] : null
+                        'hotel_info' => null
                     ];
                 } 
                 // Verificar si el token ha expirado
@@ -167,19 +172,7 @@ class TokenApiController {
                         'valid' => false,
                         'message' => 'Token expirado',
                         'token_data' => $tokenData,
-                        'hotel_info' => $hotelInfo ? [
-                            'id' => $this->hotelModel->id,
-                            'name' => $this->hotelModel->name,
-                            'category' => $this->hotelModel->category,
-                            'description' => $this->hotelModel->description,
-                            'address' => $this->hotelModel->address,
-                            'district' => $this->hotelModel->district,
-                            'province' => $this->hotelModel->province,
-                            'department' => $this->hotelModel->department,
-                            'phone' => $this->hotelModel->phone,
-                            'email' => $this->hotelModel->email,
-                            'website' => $this->hotelModel->website
-                        ] : null
+                        'hotel_info' => null
                     ];
                 }
                 else {
@@ -187,19 +180,7 @@ class TokenApiController {
                         'valid' => true,
                         'message' => 'Token válido',
                         'token_data' => $tokenData,
-                        'hotel_info' => $hotelInfo ? [
-                            'id' => $this->hotelModel->id,
-                            'name' => $this->hotelModel->name,
-                            'category' => $this->hotelModel->category,
-                            'description' => $this->hotelModel->description,
-                            'address' => $this->hotelModel->address,
-                            'district' => $this->hotelModel->district,
-                            'province' => $this->hotelModel->province,
-                            'department' => $this->hotelModel->department,
-                            'phone' => $this->hotelModel->phone,
-                            'email' => $this->hotelModel->email,
-                            'website' => $this->hotelModel->website
-                        ] : null
+                        'hotel_info' => null
                     ];
                 }
             } else {
@@ -219,5 +200,100 @@ class TokenApiController {
         exit();
     }
 
+    // Métodos adicionales para las otras vistas
+
+    // Cliente API - Interfaz para clientes
+    public function clienteApi() {
+        // Verificar si el usuario está logueado
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: index.php?action=login");
+            exit();
+        }
+        
+        include BASE_PATH . '/views/token_api/cliente_api.php';
+    }
+
+    // Buscar hoteles
+    public function buscarHoteles() {
+        // Verificar si el usuario está logueado
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: index.php?action=login");
+            exit();
+        }
+        
+        $hoteles = [];
+        $searchTerm = '';
+        
+        if ($_POST && isset($_POST['search'])) {
+            $searchTerm = trim($_POST['search']);
+            
+            if (!empty($searchTerm)) {
+                // Buscar hoteles en la base de datos
+                //$hoteles = $this->hotelModel->search($searchTerm);
+            }
+        }
+        
+        include BASE_PATH . '/views/token_api/buscar_hoteles.php';
+    }
+
+    // Eliminar token
+    public function delete() {
+        // Verificar si el usuario está logueado
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: index.php?action=login");
+            exit();
+        }
+
+        if (isset($_GET['id'])) {
+            $id = $_GET['id'];
+            
+            if ($this->tokenModel->delete($id)) {
+                $_SESSION['message'] = "Token eliminado exitosamente";
+            } else {
+                $_SESSION['error'] = "Error al eliminar el token";
+            }
+        }
+        
+        header("Location: index.php");
+        exit();
+    }
+
+    // Editar token
+    public function edit() {
+        // Verificar si el usuario está logueado
+        if (!isset($_SESSION['user_id'])) {
+            header("Location: index.php?action=login");
+            exit();
+        }
+
+        if (isset($_GET['id'])) {
+            $id = $_GET['id'];
+            $token = $this->tokenModel->readOne($id);
+            
+            if (!$token) {
+                $_SESSION['error'] = "Token no encontrado";
+                header("Location: index.php");
+                exit();
+            }
+
+            if ($_POST) {
+                $name = $_POST['name'];
+                $is_active = isset($_POST['is_active']) ? 1 : 0;
+                
+                if ($this->tokenModel->update($id, $name, $is_active)) {
+                    $_SESSION['message'] = "Token actualizado exitosamente";
+                    header("Location: index.php?action=view&id=" . $id);
+                    exit();
+                } else {
+                    $_SESSION['error'] = "Error al actualizar el token";
+                }
+            }
+            
+            include BASE_PATH . '/views/token_api/edit.php';
+        } else {
+            header("Location: index.php");
+            exit();
+        }
+    }
 }
 ?>

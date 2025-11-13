@@ -1,55 +1,49 @@
 <?php
 session_start();
+define('BASE_PATH', dirname(__FILE__));
 
-// Definir la ruta base
-define('BASE_PATH', __DIR__);
+require_once 'src/config/database.php';
+require_once 'src/controller/TokenApiController.php';
 
-// Cargar archivos necesarios
-require_once BASE_PATH . '/src/config/database.php';
-require_once BASE_PATH . '/src/Model/TokenApi.php';
-require_once BASE_PATH . '/src/Model/User.php';
-require_once BASE_PATH . '/src/controller/TokenApiController.php';
-require_once BASE_PATH . '/src/controller/AuthController.php';
+$controller = new TokenApiController();
+$action = $_GET['action'] ?? 'index';
 
-// Instanciar controladores
-$tokenController = new TokenApiController();
-$authController = new AuthController();
-
-// Determinar la acción a realizar
-$action = isset($_GET['action']) ? $_GET['action'] : 'index';
-
-// Ejecutar la acción correspondiente
-switch ($action) {
-    case 'login':
-        $authController->login();
-        break;
-    case 'processLogin':
-        $authController->processLogin();
-        break;
-    case 'logout':
-        $authController->logout();
+switch($action) {
+    case 'index':
+        $controller->index();
         break;
     case 'create':
-        $tokenController->create();
+        $controller->create();
         break;
     case 'generate':
-        $tokenController->generate();
-        break;
-    case 'toggleStatus':
-        $tokenController->toggleStatus();
-        break;
-    case 'validate': // NUEVA ACCIÓN
-        $tokenController->validate();
-        break;
-    case 'processValidate': // NUEVA ACCIÓN
-        $tokenController->processValidate();
+        $controller->generate();
         break;
     case 'view':
-        $tokenController->view();
+        $controller->view();
         break;
-    case 'index':
+    case 'edit':
+        $controller->edit();
+        break;
+    case 'delete':
+        $controller->delete();
+        break;
+    case 'toggleStatus':
+        $controller->toggleStatus();
+        break;
+    case 'validate':
+        $controller->validate();
+        break;
+    case 'processValidate':
+        $controller->processValidate();
+        break;
+    case 'cliente_api':
+        $controller->clienteApi();
+        break;
+    case 'buscar_hoteles':
+        $controller->buscarHoteles();
+        break;
     default:
-        $tokenController->index();
+        $controller->index();
         break;
 }
 ?>

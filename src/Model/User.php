@@ -1,4 +1,6 @@
 <?php
+
+
 class User {
     private $conn;
     private $table_name = "users";
@@ -7,6 +9,7 @@ class User {
     public $username;
     public $password;
     public $role;
+    public $created_at;
 
     public function __construct($db) {
         $this->conn = $db;
