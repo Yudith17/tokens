@@ -9,140 +9,128 @@ class Hotel {
     }
     
     public function buscarHoteles($destino, $estrellas = null) {
-        // Intentar conectar con la API SISHO
-        $hoteles = $this->callAPISISHO($destino, $estrellas);
-        
-        // Si falla, usar datos basados en tu lista real
-        if (empty($hoteles)) {
-            $hoteles = $this->getHotelesReales($destino, $estrellas);
-        }
-        
-        return $hoteles;
+        // Usar directamente los datos reales de tu sistema SISHO
+        return $this->getHotelesReales($destino, $estrellas);
     }
     
-    private function callAPISISHO($destino, $estrellas) {
-        $api_url = "http://localhost/sisho/api/hoteles.php";
-        
-        $params = [
-            'busqueda' => $destino,
-            'categoria' => $estrellas
-        ];
-        
-        $query_string = http_build_query($params);
-        $full_url = $api_url . '?' . $query_string;
-        
-        error_log("Llamando a API SISHO: " . $full_url);
-        
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $full_url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($http_code === 200) {
-            $data = json_decode($response, true);
-            if ($data && $data['success']) {
-                return $data['hoteles'];
-            }
-        }
-        
-        return [];
-    }
-    
-    // Datos REALES basados en tu lista de hoteles
+    // Datos REALES basados en tu lista de hoteles de SISHO
     private function getHotelesReales($destino, $estrellas) {
         $hotelesReales = [
             [
                 'id' => 1,
                 'nombre' => 'Hotel Valencia',
                 'estrellas' => 3,
-                'direccion' => 'Jiron Saenz Peña, HUANTA',
+                'direccion' => 'Jiron Saenz Peña',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 120,
                 'descripcion' => 'Amplias y cómodas habitaciones, la atención fue excelente',
-                'contacto' => '914721345 - hotelvalencia@gmail.com',
-                'servicios' => ['WiFi', 'Estacionamiento', 'Recepcion 24h']
+                'telefono' => '914721345',
+                'email' => 'hotelvalencia@gmail.com',
+                'servicios' => ['WiFi', 'Estacionamiento', 'Recepcion 24h', 'Restaurante']
             ],
             [
                 'id' => 2,
                 'nombre' => 'Hotel Su Majestad 2',
                 'estrellas' => 2,
-                'direccion' => 'Jr. Osvaldo N. Regal 411, HUANTA',
+                'direccion' => 'Jr. Osvaldo N. Regal 411',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 80,
                 'descripcion' => 'Su Majestad II es un hospedaje de 2 estrellas que ofrece comodidad',
-                'contacto' => '984637463 - sumagestad2@gmail.com',
-                'servicios' => ['WiFi', 'Recepcion']
+                'telefono' => '984637463',
+                'email' => 'sumagestad2@gmail.com',
+                'servicios' => ['WiFi', 'Recepcion', 'Estacionamiento']
             ],
             [
                 'id' => 3,
                 'nombre' => 'Moreno\'s',
                 'estrellas' => 3,
                 'direccion' => 'Calle San Ignacio 364, Laredo, Peru',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 95,
                 'descripcion' => 'DEJA QUE EL GUSTÓ DECIDA. Ofrecemos la mejor experiencia',
-                'contacto' => '989522700 - morenos.chicken@gmail.com',
-                'servicios' => ['Restaurante', 'WiFi']
+                'telefono' => '989522700',
+                'email' => 'morenos.chicken@gmail.com',
+                'servicios' => ['Restaurante', 'WiFi', 'Recepcion']
             ],
             [
                 'id' => 4,
                 'nombre' => 'Hotel Las Vegas',
                 'estrellas' => 3,
-                'direccion' => 'Av. Mariscal Castilla Nro 882, HUANTA',
+                'direccion' => 'Av. Mariscal Castilla Nro 882',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 110,
                 'descripcion' => 'Hotel con excelente ubicación en el centro de Huanta',
-                'contacto' => '936252508 - hotelasvegashuanta@gmail.com',
-                'servicios' => ['WiFi', 'Estacionamiento', 'Restaurante']
+                'telefono' => '936252508',
+                'email' => 'hotelasvegashuanta@gmail.com',
+                'servicios' => ['WiFi', 'Estacionamiento', 'Restaurante', 'Recepcion 24h']
             ],
             [
                 'id' => 5,
                 'nombre' => 'Hostal Nina Quintana',
                 'estrellas' => 3,
-                'direccion' => 'Jr. Manuel Jesús Urbina 166, HUANTA',
+                'direccion' => 'Jr. Manuel Jesús Urbina 166',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 65,
                 'descripcion' => 'Un lugar agradable, acogedor y discreto para que usted pase una estadía placentera',
-                'contacto' => '910027208',
-                'servicios' => ['WiFi', 'Habitaciones familiares']
+                'telefono' => '910027208',
+                'email' => '',
+                'servicios' => ['WiFi', 'Habitaciones familiares', 'Recepcion']
             ],
             [
                 'id' => 6,
                 'nombre' => 'GRAN HOTEL IMPERIAL HUANTA',
                 'estrellas' => 3,
-                'direccion' => 'Jr. Miguel Uniiveros 257, HUANTA',
+                'direccion' => 'Jr. Miguel Uniiveros 257',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 130,
                 'descripcion' => 'Muy cerca al centro y al mercado. Ubicación estratégica',
-                'contacto' => '923056622 - granhotelimperial@gmail.com',
-                'servicios' => ['WiFi', 'Estacionamiento', 'Restaurante', 'Recepcion 24h']
+                'telefono' => '923056622',
+                'email' => 'granhotelimperial@gmail.com',
+                'servicios' => ['WiFi', 'Estacionamiento', 'Restaurante', 'Recepcion 24h', 'Room Service']
             ],
             [
                 'id' => 8,
                 'nombre' => 'Hotel Huanta Grande',
                 'estrellas' => 3,
-                'direccion' => 'Av. Libertad 123, HUANTA',
+                'direccion' => 'Av. Libertad 123',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 150,
                 'descripcion' => 'El mejor hotel de la ciudad con servicios premium y atención personalizada',
-                'contacto' => '966123456 - huantagrande@hotel.com',
-                'servicios' => ['WiFi', 'Piscina', 'Spa', 'Restaurante', 'Estacionamiento']
+                'telefono' => '966123456',
+                'email' => 'huantagrande@hotel.com',
+                'servicios' => ['WiFi', 'Piscina', 'Spa', 'Restaurante', 'Estacionamiento', 'Gimnasio']
             ],
             [
                 'id' => 9,
                 'nombre' => 'Hostal San Francisco',
                 'estrellas' => 3,
-                'direccion' => 'Jr. San Martín 456, HUANTA',
+                'direccion' => 'Jr. San Martín 456',
+                'distrito' => 'HUANTA',
+                'provincia' => 'HUANTA',
                 'precio' => 70,
                 'descripcion' => 'Hostal económico y acogedor, perfecto para mochileros',
-                'contacto' => '955789123 - sanfranciscohostal@gmail.com',
-                'servicios' => ['WiFi', 'Cocina compartida', 'Lavandería']
+                'telefono' => '955789123',
+                'email' => 'sanfranciscohostal@gmail.com',
+                'servicios' => ['WiFi', 'Cocina compartida', 'Lavandería', 'Recepcion']
             ]
         ];
+        
         
         // Filtrar por búsqueda
         if (!empty($destino)) {
             $searchTerm = strtolower($destino);
             $hotelesReales = array_filter($hotelesReales, function($hotel) use ($searchTerm) {
                 return strpos(strtolower($hotel['nombre']), $searchTerm) !== false ||
-                       strpos(strtolower($hotel['direccion']), $searchTerm) !== false;
+                       strpos(strtolower($hotel['direccion']), $searchTerm) !== false ||
+                       strpos(strtolower($hotel['distrito']), $searchTerm) !== false ||
+                       strpos(strtolower($hotel['descripcion']), $searchTerm) !== false;
             });
         }
         
@@ -154,6 +142,19 @@ class Hotel {
         }
         
         return array_values($hotelesReales);
+    }
+    public function verificarTokenActivo() {
+        $stmt = $this->db->prepare("
+            SELECT token, name, expires_at 
+            FROM tokens_api 
+            WHERE is_active = 1 AND expires_at > NOW() 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        ");
+        $stmt->execute();
+        $token_data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return !empty($token_data);
     }
 }
 ?>

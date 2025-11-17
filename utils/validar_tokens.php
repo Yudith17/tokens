@@ -15,4 +15,21 @@ function validarSesion() {
     }
     return true;
 }
+
+// Nueva función para validar token de API
+function validarTokenAPI() {
+    require_once '../src/model/Hotel.php';
+    $hotelModel = new Hotel();
+    
+    $tokenValido = $hotelModel->verificarTokenActivo();
+    
+    if (!$tokenValido) {
+        return [
+            'valido' => false,
+            'mensaje' => 'Token expirado o no encontrado. Contacte al administrador.'
+        ];
+    }
+    
+    return ['valido' => true];
+}
 ?>
