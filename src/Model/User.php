@@ -1,28 +1,26 @@
 <?php
+require_once '../src/config/database.php';
+
 class User {
-    private $pdo;
+    private $db;
     
-    public function __construct($pdo) {
-        $this->pdo = $pdo;
+    public function __construct() {
+        $this->db = Database::getConnection();
     }
     
-    public function getUserById($userId) {
-        $sql = "SELECT * FROM users WHERE id = ?";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$userId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-    
-    public function validateUser($username, $password) {
-        $sql = "SELECT * FROM users WHERE username = ?";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$username]);
+    public function authenticate($usuario, $password) {
+        $stmt = $this->db->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
+        $stmt->execute([$usuario]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($user && password_verify($password, $user['password'])) {
-            return $user;
+        if ($user) {
+            // Verificar la contraseña hasheada
+            if (password_verify($password, $user['password'])) {
+                return $user;
+            }
+            // Para debugging - muestra qué contraseña se está usando
+            error_log("Login attempt - User: $usuario, Password provided: $password");
         }
-        
         return false;
     }
 }

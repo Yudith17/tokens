@@ -1,27 +1,21 @@
 <?php
 class Database {
     private static $instance = null;
-    private $pdo;
     
-    private function __construct() {
-        $host = 'localhost';
-        $dbname = 'tokens'; // Tu base de datos
-        $username = 'root';
-        $password = 'root';
-        
-        try {
-            $this->pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("Error de conexión: " . $e->getMessage());
-        }
-    }
-    
-    public static function getInstance() {
+    public static function getConnection() {
         if (self::$instance === null) {
-            self::$instance = new Database();
+            try {
+                self::$instance = new PDO(
+                    "mysql:host=localhost;dbname=tokens;charset=utf8",
+                    "root",
+                    "root",
+                    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+                );
+            } catch (PDOException $e) {
+                die("Error de conexión: " . $e->getMessage());
+            }
         }
-        return self::$instance->pdo;
+        return self::$instance;
     }
 }
 ?>

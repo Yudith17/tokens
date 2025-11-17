@@ -1,8 +1,3 @@
-# .htaccess - Redirección automática
 RewriteEngine On
-
-# Redireccionar la raíz a cliente_api.php
-RewriteRule ^$ /tokens/cliente_api.php [L]
-
-# Opcional: Redireccionar index.php también
-RewriteRule ^index\.php$ /tokens/cliente_api.php [L,R=301]
+RewriteRule ^$ public/ [L]
+RewriteRule (.*) public/$1 [L]
