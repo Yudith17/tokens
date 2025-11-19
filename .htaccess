@@ -1,3 +1,21 @@
 RewriteEngine On
-RewriteRule ^$ public/ [L]
-RewriteRule (.*) public/$1 [L]
+
+# Evitar acceso directo a archivos sensibles
+<FilesMatch "\.(env|json|config|log|sql)$">
+    Deny from all
+</FilesMatch>
+
+# API routes
+RewriteRule ^api/validate$ index.php?action=api_validate [QSA,L]
+RewriteRule ^api/user$ index.php?action=api_user [QSA,L]
+RewriteRule ^api/hotels$ index.php?action=api_hotels [QSA,L]
+RewriteRule ^api/validate-sisho$ index.php?action=validate_sisho_token [QSA,L]
+
+# Redirect all other requests to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Configuraciones de seguridad
+Options -Indexes
+ServerSignature Off
