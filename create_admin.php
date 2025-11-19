@@ -14,7 +14,7 @@ try {
     )";
     
     $db->exec($sql);
-    echo "✅ Tabla usuarios lista<br>";
+    echo "Tabla usuarios lista<br>";
     
     // Crear usuario (solo password)
     $sql = "INSERT INTO usuarios (password) 
@@ -22,14 +22,14 @@ try {
             ON DUPLICATE KEY UPDATE password = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'";
     
     $db->exec($sql);
-    echo "✅ Usuario creado<br>";
-    echo "🔑 <strong>Contraseña: password</strong><br>";
-    echo "👤 <strong>Cualquier usuario funciona</strong><br>";
+    echo "Usuario creado<br>";
+    echo "<strong>Contraseña: password</strong><br>";
+    echo "<strong>Cualquier usuario funciona</strong><br>";
     
     echo "<hr>";
     echo "<a href='index.php'>Ir al Login</a>";
     
 } catch (PDOException $e) {
-    echo "❌ Error: " . $e->getMessage();
+    echo "Error: " . $e->getMessage();
 }
 ?>

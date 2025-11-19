@@ -1,10 +1,10 @@
 <?php
 class Database {
-    private $host = "127.0.0.1";
-    private $db_name = "tokens";  // ✅ Base de datos de TOKENS
+    private $host = "localhost";
+    private $db_name = "tokens";
     private $username = "root";
-    private $password = "";
-    public $conn;
+    private $password = "root";
+    private $port = 8889;
 
     public function getConnection() {
         $this->conn = null;

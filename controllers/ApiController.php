@@ -4,13 +4,14 @@ class ApiController {
     private $sishoDb;
     
     private function connectToSisho() {
-        $host = "127.0.0.1";
-        $db_name = "sisho";
-        $username = "root";
-        $password = "";
+        $host = "localhost";  
+        $db_name = "sisho";  
+        $username = "root";   
+        $password = "root";   
+        $port = 8889;    
         
         try {
-            $conn = new PDO("mysql:host=$host;dbname=$db_name", $username, $password);
+            $conn = new PDO("mysql:host=$host;port=$port;dbname=$db_name", $username, $password);
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return $conn;
         } catch(PDOException $e) {
@@ -18,7 +19,6 @@ class ApiController {
             return null;
         }
     }
-
     public function __construct($db) {
         $this->tokenModel = new Token($db);
         $this->sishoDb = $this->connectToSisho();

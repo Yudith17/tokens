@@ -3,13 +3,14 @@ class HotelController {
     private $tokenModel;
     
     private function connectToSisho() {
-        $host = "127.0.0.1";
+        $host = "localhost";
         $db_name = "sisho";
         $username = "root";
-        $password = "";
+        $password = "root";
+        $port = 8889;
         
         try {
-            $conn = new PDO("mysql:host=$host;dbname=$db_name", $username, $password);
+            $conn = new PDO("mysql:host=$host;port=$port;dbname=$db_name", $username, $password);
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return $conn;
         } catch(PDOException $e) {
@@ -30,7 +31,7 @@ class HotelController {
 
         $hoteles = [];
         $categorias = $this->getCategorias();
-        $tokenStatus = $this->checkTokenStatus(); // ✅ NUEVO: Verificar estado del token
+        $tokenStatus = $this->checkTokenStatus(); // NUEVO: Verificar estado del token
         
         // Si el token está activo y hay búsqueda, buscar hoteles
         if($tokenStatus['active'] && $_GET && !empty(array_filter($_GET))) {
@@ -45,7 +46,7 @@ class HotelController {
     }
 
     /**
-     * ✅ NUEVO MÉTODO: Verificar estado del token del usuario
+     * UEVO MÉTODO: Verificar estado del token del usuario
      */
     private function checkTokenStatus() {
         $userTokens = $this->tokenModel->getUserTokens($_SESSION['user_id']);

@@ -117,31 +117,31 @@ document.getElementById('btn-buscar-hoteles').addEventListener('click', async fu
         console.log('📡 URL llamada:', url);
         
         const response = await fetch(url);
-        console.log('📨 Status de respuesta:', response.status);
+        console.log('Status de respuesta:', response.status);
         
         const contentType = response.headers.get('content-type');
-        console.log('📋 Content-Type:', contentType);
+        console.log('Content-Type:', contentType);
         
         if (!contentType || !contentType.includes('application/json')) {
             const textResponse = await response.text();
-            console.error('❌ Respuesta no es JSON:', textResponse.substring(0, 200));
+            console.error('Respuesta no es JSON:', textResponse.substring(0, 200));
             throw new Error('El servidor no respondió con JSON. Verifica la ruta.');
         }
         
         const data = await response.json();
-        console.log('📨 Respuesta COMPLETA:', data);
+        console.log('Respuesta COMPLETA:', data);
         
         if (data.activo) {
-            mostrarMensajeExito('✅ Token SISHO válido. Redirigiendo a hoteles...');
+            mostrarMensajeExito('Token SISHO válido. Redirigiendo a hoteles...');
             setTimeout(() => {
                 window.location.href = 'index.php?action=search_hotels';
             }, 1500);
         } else {
-            mostrarMensajeError('❌ Error al validar el token: ' + (data.mensaje || 'Token inactivo o expirado'));
+            mostrarMensajeError('Error al validar el token: ' + (data.mensaje || 'Token inactivo o expirado'));
         }
     } catch (error) {
-        console.error('💥 Error completo:', error);
-        mostrarMensajeError('🚨 Error de conexión: ' + error.message);
+        console.error('Error completo:', error);
+        mostrarMensajeError('Error de conexión: ' + error.message);
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
