@@ -1,7 +1,7 @@
 <?php
 $title = "Login - Cliente API";
 ?>
-<?php include '../views/layouts/header.php'; ?>
+<?php include '../layouts/header.php'; ?>
 
 <div style="max-width: 400px; margin: 100px auto; padding: 20px;">
     <h2>Login - Cliente API</h2>

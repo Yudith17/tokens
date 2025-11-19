@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once '../src/controller/HotelController.php';
+require_once __DIR__ . '/../src/controller/HotelController.php';
 
 $controller = new HotelController();
 

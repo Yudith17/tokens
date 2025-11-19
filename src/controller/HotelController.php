@@ -13,62 +13,64 @@ class HotelController extends BaseController {
         $this->hotelModel = new Hotel();
     }
     
+    // Método render para cargar vistas
+    protected function render($view, $data = []) {
+        // Extraer los datos para que estén como variables en la vista
+        extract($data);
+        
+        // Incluir el header
+        require_once '../views/layouts/header.php';
+        
+        // Incluir la vista específica
+        require_once '../views/' . $view . '.php';
+    }
+    
     public function index() {
         if (!isset($_SESSION['user_id'])) {
             $this->redirect('login.php');
             return;
         }
         
-        // Validar token API antes de mostrar la página
-        $validacionToken = validarTokenAPI();
-        if (!$validacionToken['valido']) {
-            $this->renderView('../views/hotel/buscar.php', [
-                'mensaje' => $validacionToken['mensaje'],
-                'resultados' => []
-            ]);
-            return;
-        }
-        
-        $this->renderView('../views/hotel/buscar.php');
+        // Redirigir al método buscar
+        $this->buscar();
     }
     
     public function buscar() {
-        if (!isset($_SESSION['user_id'])) {
-            $this->redirect('login.php');
-            return;
-        }
+        $token = $_POST['token'] ?? "tok_4aaaf5a2dc22b87d7c70efed5324def05be51ff8626688825f6a530dccdaec74";
+        $nombre = $_POST['nombre'] ?? '';
+        $categoria = $_POST['categoria'] ?? 'todas';
         
-        $resultados = [];
-        $destino = '';
-        $mensaje = '';
+        $error = null;
+        $hoteles = [];
+        $total = 0;
         
-        // Validar token API primero
-        $validacionToken = validarTokenAPI();
-        if (!$validacionToken['valido']) {
-            $mensaje = $validacionToken['mensaje'];
-        } else {
-            // Solo procesar búsqueda si el token es válido
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $destino = $_POST['destino'] ?? '';
-                $estrellas = $_POST['estrellas'] ?? null;
-                
-                if (!empty($destino)) {
-                    // Buscar hoteles en la API incluyendo las estrellas
-                    $resultados = $this->hotelModel->buscarHoteles($destino, $estrellas);
+        // Solo validar el token si se envió el formulario (hay búsqueda)
+        if (!empty($nombre)) {
+            $validacion = validarToken($token);
+            
+            if (!$validacion['success']) {
+                $error = $validacion['message'];
+            } else {
+                // Si el token es válido, proceder con la búsqueda
+                try {
+                    // Usar el modelo Hotel para buscar
+                    $hoteles = $this->hotelModel->buscarHoteles($nombre, $categoria);
+                    $total = count($hoteles);
                     
-                    if (empty($resultados)) {
-                        $mensaje = "No se encontraron hoteles disponibles para los criterios seleccionados.";
-                    }
-                } else {
-                    $mensaje = "Por favor, ingrese un nombre de hotel o destino.";
+                } catch (Exception $e) {
+                    $error = "Error en la búsqueda: " . $e->getMessage();
                 }
             }
         }
         
-        $this->renderView('../views/hotel/buscar.php', [
-            'resultados' => $resultados,
-            'destino' => $destino,
-            'mensaje' => $mensaje
+        // Pasar datos a la vista (siempre mostrar el formulario)
+        $this->render('hotel/buscar', [
+            'hoteles' => $hoteles,
+            'termino_busqueda' => $nombre,
+            'total' => $total,
+            'token' => $token,
+            'categoria_seleccionada' => $categoria,
+            'error' => $error
         ]);
     }
 }
